@@ -40,7 +40,10 @@ sep_old <-
          title = course_title,
          name = course_name,
          department = course_department) %>% 
-  filter(u_grad > 10)
+group_by(title, id, name, department) %>%
+  summarize(u_grad = sum(u_grad)) %>%
+    filter(u_grad > 10)
+  view(sep_old)
 
 # But this is not correct! Look for Gov 50: Data. What do you see? What can you
 # do to clean it up?
@@ -51,6 +54,23 @@ sep_old <-
 
 **Prompt:** Read in and clean the new data, creating an object called `sep_new`. 
 
+```{r}
+sep_new <- 
+  read_excel("new_data/class_enrollment_summary_by_term_9-22-2020.xlsx", 
+             skip = 3) %>% 
+  clean_names() %>% 
+  filter(! is.na(course_title)) %>% 
+  select(-grad, -non_degree, -x_reg, -vus, -employee, 
+         -withdraw, -total, -instructor_full_name, -course_section_code) %>%
+  rename(id = course_id,
+         title = course_title,
+         name = course_name,
+         department = course_department) %>% 
+group_by(title, id, name, department) %>%
+  summarize(new_total_ugrad = sum(u_grad), .groups = "drop_last") %>%
+    filter(new_total_ugrad > 10)
+  view(sep_new)
+```
 
 
 ### Scene 2
@@ -60,17 +80,33 @@ sep_old <-
 
 Before we start on the model, Wisdom suggests we should:
 
-
+- Make reasonable assumptions
+- Keep in mind missing data
+- Keep in mind unobservable data
 
 
 After we have a model, Temperance suggests we should:
 
-
+- Keep in mind uncertainty in estimating the ATE
+- Keep in mind individual variation
+- Realize that randomization is impossible here
+- Consider internal and external validity
 
 ### Scene 3
 
 **Prompt:** Which classes had the biggest increases and decreases in undergraduate enrollments between September 1 and today? Make a graphic that shows the 5 biggest increases and decreases. Make it look nice.
 
+```{r}
+sep_both <- inner_join(sep_old, sep_new, by = c("id", "name", "department", "title"))
+
+
+sep_both %>%
+  mutate(changes = new_total_ugrad - u_grad) %>%
+arrange(desc(changes)) %>%
+  
+
+
+```
 
 
 
